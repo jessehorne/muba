@@ -56,7 +56,7 @@ func getFormattedTeamLayout(users map[string]*User) string {
 		if us.Team == nil || us.Username == "" {
 			continue
 		}
-		if us.Team.Name == "red" {
+		if us.Team.ID == "red" {
 			others = append(others, fmt.Sprintf("%s (%s)", us.Username, colors["red"].Sprint(us.Team.Name)))
 		}
 	}
@@ -65,7 +65,7 @@ func getFormattedTeamLayout(users map[string]*User) string {
 		if us.Team == nil || us.Username == "" {
 			continue
 		}
-		if us.Team.Name == "blue" {
+		if us.Team.ID == "blue" {
 			others = append(others, fmt.Sprintf("%s (%s)", us.Username, colors["blue"].Sprint(us.Team.Name)))
 		}
 	}

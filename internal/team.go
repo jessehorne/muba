@@ -6,13 +6,19 @@ const (
 )
 
 type Team struct {
+	ID    string
 	Name  string
+	Base  string // base location
+	Size  int
 	Users []*User
 }
 
-func NewTeam(name string) *Team {
+func NewTeam(data MapDataTeam) *Team {
 	return &Team{
-		Name:  name,
+		ID:    data.ID,
+		Name:  data.Name,
+		Base:  data.Base,
+		Size:  data.Size,
 		Users: make([]*User, 0),
 	}
 }

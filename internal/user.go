@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"slices"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -50,7 +51,7 @@ func (u *User) announceUserJoin() {
 }
 
 func (u *User) getUsernameLoop() {
-	u.conn.Write([]byte("Please type a Username: "))
+	sendToOne(u.conn, "What should we call you?\n")
 	for u.Username == "" {
 		data := getInput(u.reader)
 		if len(data) != 0 {
@@ -60,30 +61,41 @@ func (u *User) getUsernameLoop() {
 }
 
 func (u *User) getTeamLoop() {
+	teams := make([]string, 0)
+	teamsFormatted := make([]string, 0)
+	for teamID, t := range u.Server.Game.Teams {
+		teams = append(teams, t.ID)
+		teamsFormatted = append(teamsFormatted, fmt.Sprintf("%s (%d)", teamID, len(t.Users)))
+	}
 	team := ""
-	u.conn.Write([]byte("Pick a Team (red or blue): "))
+	sendToOne(u.conn, fmt.Sprintf("Pick a team: %s\n", strings.Join(teamsFormatted, ", ")))
 	for team == "" {
 		team = getInput(u.reader)
-		if team != "red" && team != "blue" {
+		if !slices.Contains(teams, team) {
+			team = ""
+			sendToOne(u.conn, fmt.Sprintf("There is no team named %s.\n", team))
 			continue
 		}
 
 		tryTeam, ok := u.Server.Game.Teams[team]
 		if !ok {
+			team = ""
+			sendToOne(u.conn, fmt.Sprintf("There is no team named %s.\n", team))
 			continue
 		}
 
-		if len(tryTeam.Users) == 5 {
-			sendToOne(u.conn, "That Team is full.")
+		if len(tryTeam.Users) == tryTeam.Size {
+			sendToOne(u.conn, "That team is full.\n")
+			team = ""
 			continue
 		}
 
 		u.Team = tryTeam
 		tryTeam.Users = append(tryTeam.Users, u)
 	}
-	sendToAllExcept(u.conn, u.Server.Users, fmt.Sprintf("%s joined %s Team!\n", u.Username, team))
-	sendToOne(u.conn, fmt.Sprintf("You joined %s Team!\n", team))
-	log.Println("[INFO]", fmt.Sprintf("%s joined %s Team", u.Username, team))
+	sendToAllExcept(u.conn, u.Server.Users, fmt.Sprintf("%s joined %s team!\n", u.Username, team))
+	sendToOne(u.conn, fmt.Sprintf("You joined %s team!\n", team))
+	log.Println("[INFO]", fmt.Sprintf("%s joined %s team", u.Username, team))
 }
 
 func (u *User) champSelectLoop() {
@@ -135,5 +147,5 @@ func (u *User) GetUsernameWithTeam() string {
 	if u.Team == nil {
 		return u.Username + " (no team)"
 	}
-	return u.Username + " (" + colors[u.Team.Name].Sprint(u.Team.Name) + ")"
+	return u.Username + " (" + colors[u.Team.ID].Sprint(u.Team.Name) + ")"
 }

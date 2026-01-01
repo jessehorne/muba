@@ -8,50 +8,41 @@ import (
 
 // MapData holds all the details of a map in memory
 type MapData struct {
-	Name      string     `json:"name"`
-	Author    string     `json:"author"`
-	Version   string     `json:"version"`
-	Map       [][]string `json:"map"`
-	StartTime int        `json:"startTime"`
-	Teams     struct {
-		Red struct {
-			Name string `json:"name"`
-			Base string `json:"base"`
-		} `json:"red"`
-		Blue struct {
-			Name string `json:"name"`
-			Base string `json:"base"`
-		} `json:"blue"`
-	} `json:"teams"`
-	Visions struct {
+	Name      string        `json:"name"`
+	Author    string        `json:"author"`
+	Version   string        `json:"version"`
+	Map       [][]string    `json:"map"`
+	StartTime int           `json:"startTime"`
+	Teams     []MapDataTeam `json:"teams"`
+	Visions   struct {
 		Definitions []struct {
-			ID          string `json:"id"`
-			Name        string `json:"name"`
-			Health      string `json:"health"`
-			Location    string `json:"location"`
-			RespawnTime int    `json:"respawnTime"`
-			Gives       *Gives `json:"gives"`
+			ID          string       `json:"id"`
+			Name        string       `json:"name"`
+			Health      string       `json:"health"`
+			Location    string       `json:"location"`
+			RespawnTime int          `json:"respawnTime"`
+			Gives       MapDataGives `json:"gives"`
 		} `json:"definitions"`
 	} `json:"visions"`
 	Turrets struct {
-		Health      int      `json:"health"`
-		Red         []string `json:"red"`
-		Blue        []string `json:"blue"`
-		AttackSpeed int      `json:"attackSpeed"`
-		Damage      int      `json:"damage"`
-		Gives       *Gives   `json:"gives"`
+		Health      int          `json:"health"`
+		Red         []string     `json:"red"`
+		Blue        []string     `json:"blue"`
+		AttackSpeed int          `json:"attackSpeed"`
+		Damage      int          `json:"damage"`
+		Gives       MapDataGives `json:"gives"`
 	} `json:"turrets"`
 	Bosses struct {
 		Locations   []string `json:"locations"`
 		Definitions []struct {
-			ID          string `json:"id"`
-			Name        string `json:"name"`
-			Health      int    `json:"health"`
-			Damage      int    `json:"damage"`
-			AttackSpeed int    `json:"attackSpeed"`
-			Location    string `json:"location"`
-			SpawnAt     int    `json:"spawnAt"`
-			Gives       *Gives `json:"gives"`
+			ID          string       `json:"id"`
+			Name        string       `json:"name"`
+			Health      int          `json:"health"`
+			Damage      int          `json:"damage"`
+			AttackSpeed int          `json:"attackSpeed"`
+			Location    string       `json:"location"`
+			SpawnAt     int          `json:"spawnAt"`
+			Gives       MapDataGives `json:"gives"`
 		} `json:"definitions"`
 	} `json:"bosses"`
 	Camps struct {
@@ -73,7 +64,14 @@ type MapData struct {
 	} `json:"camps"`
 }
 
-type Gives struct {
+type MapDataTeam struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Base string `json:"base"`
+	Size int    `json:"size"`
+}
+
+type MapDataGives struct {
 	LastHitter struct {
 		Coin      int `json:"coin"`
 		Health    int `json:"health"`
@@ -112,28 +110,4 @@ func NewMap(path string) (*Map, error) {
 		Path: path,
 		Data: mapData,
 	}, nil
-}
-
-// Load sets up the server to run the map according to all the fields set in the JSON file
-func (m *Map) Load(s *Server) {
-	// set up teams
-	// todo
-
-	// set up base
-	// todo
-
-	// load towers
-	// todo
-
-	// set up minion spawning
-	// todo
-
-	// set up camps
-	// todo
-
-	// set up bosses
-	// todo
-
-	// set up vision camps
-	// todo
 }

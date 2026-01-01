@@ -12,16 +12,20 @@
     ["G1", "G2", "G3", "G4", "G5", "G6", "G7"]
   ],
   "startTime": 60,
-  "teams": {
-    "red": {
+  "teams": [
+    {
+      "id": "red",
       "name": "Red",
-      "base": "G1"
+      "base": "G1",
+      "size": 5
     },
-    "blue": {
+    {
+      "id": "blue",
       "name": "Blue",
-      "base": "A7"
+      "base": "A7",
+      "size": 5
     }
-  },
+  ],
   "visions": {
     "definitions": [
       {
