@@ -22,13 +22,18 @@ type Server struct {
 }
 
 func NewServer(address, port string) (*Server, error) {
+	g, err := NewGame("./data/maps/numora.json")
+	if err != nil {
+		return nil, err
+	}
+
 	s := &Server{
 		Address:        address,
 		Port:           port,
 		Users:          make(map[string]*User),
-		Game:           NewGame(),
+		Game:           g,
 		closer:         make(chan struct{}),
-		welcomeMessage: string(readFromFile("./data/welcome.utf8")),
+		welcomeMessage: string(readFromFile("./data/messages/welcome.utf8")),
 	}
 
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%s", s.Address, s.Port))

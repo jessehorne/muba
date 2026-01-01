@@ -18,51 +18,51 @@ var (
 
 var (
 	GameStatsFighter = GameStats{
-		Strength:    0,
-		Defense:     0,
-		MoveSpeed:   0,
-		AttackSpeed: 0,
-		Aura:        0,
-		Health:      0,
-		Gold:        0,
+		Strength:    10,
+		Defense:     10,
+		MoveSpeed:   7,
+		AttackSpeed: 4,
+		Aura:        1,
+		Health:      700,
+		Gold:        100,
 		Experience:  0,
-		Level:       0,
+		Level:       1,
 	}
 
 	GameStatsWizard = GameStats{
-		Strength:    0,
-		Defense:     0,
-		MoveSpeed:   0,
-		AttackSpeed: 0,
-		Aura:        0,
-		Health:      0,
-		Gold:        0,
+		Strength:    1,
+		Defense:     3,
+		MoveSpeed:   5,
+		AttackSpeed: 4,
+		Aura:        10,
+		Health:      500,
+		Gold:        100,
 		Experience:  0,
-		Level:       0,
+		Level:       1,
 	}
 
 	GameStatsArcher = GameStats{
-		Strength:    0,
-		Defense:     0,
-		MoveSpeed:   0,
-		AttackSpeed: 0,
+		Strength:    3,
+		Defense:     3,
+		MoveSpeed:   4,
+		AttackSpeed: 2,
 		Aura:        0,
-		Health:      0,
-		Gold:        0,
+		Health:      400,
+		Gold:        100,
 		Experience:  0,
-		Level:       0,
+		Level:       1,
 	}
 
 	GameStatsNinja = GameStats{
-		Strength:    0,
-		Defense:     0,
-		MoveSpeed:   0,
-		AttackSpeed: 0,
+		Strength:    5,
+		Defense:     1,
+		MoveSpeed:   3,
+		AttackSpeed: 3,
 		Aura:        0,
-		Health:      0,
-		Gold:        0,
+		Health:      300,
+		Gold:        100,
 		Experience:  0,
-		Level:       0,
+		Level:       1,
 	}
 )
 
