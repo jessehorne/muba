@@ -8,6 +8,15 @@ const (
 )
 
 var (
+	ChampStringToType = map[string]int{
+		"fighter": ChampTypeFighter,
+		"wizard":  ChampTypeWizard,
+		"archer":  ChampTypeArcher,
+		"ninja":   ChampTypeNinja,
+	}
+)
+
+var (
 	GameStatsFighter = GameStats{
 		Strength:    0,
 		Defense:     0,

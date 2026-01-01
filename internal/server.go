@@ -13,7 +13,7 @@ type Server struct {
 	Port    string
 
 	Users map[string]*User
-	Teams map[string]*Team
+	Game  *Game
 
 	listener net.Listener
 	closer   chan struct{}
@@ -23,13 +23,10 @@ type Server struct {
 
 func NewServer(address, port string) (*Server, error) {
 	s := &Server{
-		Address: address,
-		Port:    port,
-		Users:   make(map[string]*User),
-		Teams: map[string]*Team{
-			"red":  NewTeam("red"),
-			"blue": NewTeam("blue"),
-		},
+		Address:        address,
+		Port:           port,
+		Users:          make(map[string]*User),
+		Game:           NewGame(),
 		closer:         make(chan struct{}),
 		welcomeMessage: string(readFromFile("./data/welcome.utf8")),
 	}
@@ -44,7 +41,7 @@ func NewServer(address, port string) (*Server, error) {
 }
 
 func (s *Server) Run() error {
-	log.Println("Starting server...")
+	log.Println("Starting Server...")
 	for {
 		select {
 		case <-s.closer:

@@ -6,13 +6,13 @@ const (
 )
 
 type Team struct {
-	Name    string
-	Players []*Player
+	Name  string
+	Users []*User
 }
 
 func NewTeam(name string) *Team {
 	return &Team{
-		Name:    name,
-		Players: []*Player{},
+		Name:  name,
+		Users: make([]*User, 0),
 	}
 }

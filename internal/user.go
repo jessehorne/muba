@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strings"
+	"slices"
 
 	"github.com/google/uuid"
 )
@@ -13,83 +13,127 @@ import (
 type User struct {
 	conn     net.Conn
 	reader   *bufio.Reader
-	id       string
-	username string
-	player   *Player
-	server   *Server
-	team     *Team
+	ID       string
+	Username string
+	Player   *Player
+	Server   *Server
+	Team     *Team
 }
 
 func NewUser(conn net.Conn, s *Server) *User {
 	return &User{
-		id:     uuid.New().String(),
+		ID:     uuid.New().String(),
 		conn:   conn,
 		reader: bufio.NewReader(conn),
-		server: s,
+		Server: s,
 	}
 }
 
 func (u *User) Handle() error {
-	u.conn.Write([]byte(u.server.welcomeMessage))
+	u.conn.Write([]byte(u.Server.welcomeMessage))
 
 	u.getUsernameLoop()
 	u.announceUserJoin()
 	u.getTeamLoop()
+	u.champSelectLoop()
 	u.inputLoop()
 
 	return nil
 }
 
 func (u *User) announceUserJoin() {
-	for _, user := range u.server.Users {
-		if user.conn.RemoteAddr().String() != u.conn.RemoteAddr().String() {
-			user.conn.Write([]byte(fmt.Sprintf("A user by the name of '%s' has joined your game.", u.username)))
-		} else {
-			var users []string
-			for _, uu := range u.server.Users {
-				if user.conn.RemoteAddr().String() != u.conn.RemoteAddr().String() {
-					addon := "(no team)"
-					if uu.team != nil {
-						addon = fmt.Sprintf("(%s)", uu.team.Name)
-					}
-					users = append(users, fmt.Sprintf("%s %s", uu.username, addon))
-				}
-			}
-			msg := "You have joined the game.\n"
-			if len(users) > 0 {
-				msg = msg + fmt.Sprintf("Your fellow players are...\n%s\n", strings.Join(users, "\n"))
-			}
-			u.conn.Write([]byte(msg))
-		}
-	}
+	// let everyone know you joined
+	sendToAllExcept(u.conn, u.Server.Users, fmt.Sprintf("A user by the name of '%s' has joined your game.", u.Username))
+
+	// show joining Player list of other players and their teams
+	sendToOne(u.conn, getFormattedTeamLayout(u.Server.Users))
 }
 
 func (u *User) getUsernameLoop() {
-	u.conn.Write([]byte("Please type a username: "))
-	for u.username == "" {
+	u.conn.Write([]byte("Please type a Username: "))
+	for u.Username == "" {
 		data := getInput(u.reader)
 		if len(data) != 0 {
-			u.username = data
+			u.Username = data
 		}
 	}
 }
 
 func (u *User) getTeamLoop() {
 	team := ""
-	u.conn.Write([]byte("Pick a team (red or blue): "))
+	u.conn.Write([]byte("Pick a Team (red or blue): "))
 	for team == "" {
 		team = getInput(u.reader)
-		if team == "red" || team == "blue" {
-			u.team = u.server.Teams[team]
+		if team != "red" && team != "blue" {
+			continue
+		}
+
+		tryTeam, ok := u.Server.Game.Teams[team]
+		if !ok {
+			continue
+		}
+
+		if len(tryTeam.Users) == 5 {
+			sendToOne(u.conn, "That Team is full.")
+			continue
+		}
+
+		u.Team = tryTeam
+		tryTeam.Users = append(tryTeam.Users, u)
+	}
+	sendToAllExcept(u.conn, u.Server.Users, fmt.Sprintf("%s joined %s Team!\n", u.Username, team))
+	sendToOne(u.conn, fmt.Sprintf("You joined %s Team!\n", team))
+	log.Println("[INFO]", fmt.Sprintf("%s joined %s Team", u.Username, team))
+}
+
+func (u *User) champSelectLoop() {
+	sendToOne(u.conn, "Select a champ (fighter, wizard, archer, or ninja): ")
+	var champSelected bool
+	var champType string
+	for !champSelected {
+		data := getInput(u.reader)
+		if len(data) == 0 {
+			continue
+		}
+
+		if slices.Contains([]string{"fighter", "wizard", "archer", "ninja"}, data) {
+			champType = data
+			u.Player = NewPlayer(ChampStringToType[data], u.Team)
+			champSelected = true
 		}
 	}
-	sendToAllExcept(u.conn, u.server.Users, fmt.Sprintf("%s joined %s team!\n", u.username, team))
-	sendToOne(u.conn, fmt.Sprintf("You joined %s team!\n", team))
-	log.Println("[INFO]", fmt.Sprintf("%s joined %s team", u.username, team))
+	c := "white"
+	switch champType {
+	case "fighter":
+		c = "purple"
+	case "wizard":
+		c = "blue"
+	case "archer":
+		c = "green"
+	case "ninja":
+		c = "yellow"
+	}
+	msg := fmt.Sprintf("Player '%s' has chosen to be a %s", u.GetUsernameWithTeam(), colors[c].Sprint(champType))
+	sendToAllExcept(u.conn, u.Server.Users, msg)
+	sendToOne(u.conn, fmt.Sprintf("You have chosen to be a %s", colors[c].Sprint(champType)))
 }
 
 func (u *User) inputLoop() {
 	for {
-		getInput(u.reader)
+		data := getInput(u.reader)
+		if len(data) == 0 {
+			continue
+		}
+		if data == "Team" {
+			sendToOne(u.conn, "Team: ")
+			sendToOne(u.conn, u.Team.Name)
+		}
 	}
+}
+
+func (u *User) GetUsernameWithTeam() string {
+	if u.Team == nil {
+		return u.Username + " (no team)"
+	}
+	return u.Username + " (" + colors[u.Team.Name].Sprint(u.Team.Name) + ")"
 }
