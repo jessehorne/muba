@@ -111,3 +111,17 @@ func NewMap(path string) (*Map, error) {
 		Data: mapData,
 	}, nil
 }
+
+func (m *Map) CoordsToRoomID(x, y int) string {
+	if len(m.Data.Map) < y+1 {
+		return ""
+	}
+	if len(m.Data.Map[y]) < x+1 {
+		return ""
+	}
+	return m.Data.Map[y][x]
+}
+
+func (m *Map) RoomIDToCoords(id string) Vector2 {
+	return NewVector2(int(id[0]-'A'), int(id[1]-'1'))
+}

@@ -36,11 +36,9 @@ func sendToAllExcept(conn net.Conn, users map[string]*User, msg string) {
 	}
 }
 
-func sendToAll(conn net.Conn, users map[string]*User, msg string) {
+func sendToAll(users map[string]*User, msg string) {
 	for _, user := range users {
-		if user.conn.RemoteAddr().String() != conn.RemoteAddr().String() {
-			user.conn.Write([]byte(colors[currentColor].Sprint(msg)))
-		}
+		user.conn.Write([]byte(colors[currentColor].Sprint(msg)))
 	}
 }
 

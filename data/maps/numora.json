@@ -17,13 +17,13 @@
       "id": "red",
       "name": "Red",
       "base": "G1",
-      "size": 5
+      "size": 1
     },
     {
       "id": "blue",
       "name": "Blue",
       "base": "A7",
-      "size": 5
+      "size": 1
     }
   ],
   "visions": {

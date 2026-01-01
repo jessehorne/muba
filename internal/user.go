@@ -12,13 +12,16 @@ import (
 )
 
 type User struct {
-	conn     net.Conn
-	reader   *bufio.Reader
-	ID       string
-	Username string
-	Player   *Player
-	Server   *Server
-	Team     *Team
+	conn      net.Conn
+	reader    *bufio.Reader
+	ID        string
+	Username  string
+	ChampType int
+	GameStats *GameStats
+	Coords    Vector2
+	Server    *Server
+	Team      *Team
+	Ready     bool
 }
 
 func NewUser(conn net.Conn, s *Server) *User {
@@ -110,7 +113,8 @@ func (u *User) champSelectLoop() {
 
 		if slices.Contains([]string{"fighter", "wizard", "archer", "ninja"}, data) {
 			champType = data
-			u.Player = NewPlayer(ChampStringToType[data], u.Team)
+			u.ChampType = ChampStringToType[data]
+			u.GameStats = NewGameStats(u.ChampType)
 			champSelected = true
 		}
 	}
@@ -136,9 +140,11 @@ func (u *User) inputLoop() {
 		if len(data) == 0 {
 			continue
 		}
-		if data == "Team" {
+		if data == "team" {
 			sendToOne(u.conn, "Team: ")
 			sendToOne(u.conn, u.Team.Name)
+		} else if data == "ready" {
+			u.SetReady()
 		}
 	}
 }
@@ -148,4 +154,10 @@ func (u *User) GetUsernameWithTeam() string {
 		return u.Username + " (no team)"
 	}
 	return u.Username + " (" + colors[u.Team.ID].Sprint(u.Team.Name) + ")"
+}
+
+func (u *User) SetReady() {
+	u.Ready = true
+	sendToAll(u.Server.Users, fmt.Sprintf("Player '%s' is ready!\n", u.GetUsernameWithTeam()))
+	u.Server.Game.CheckIfReadyToStart()
 }
