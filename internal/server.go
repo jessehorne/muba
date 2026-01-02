@@ -48,14 +48,11 @@ func NewServer(address, port string) (*Server, error) {
 func (s *Server) Run() error {
 	log.Println("Starting Server...")
 
-	//go s.Game.StartGameLoop()
-
 	for {
 		select {
 		case <-s.closer:
 			log.Println("[INFO] closing game...")
 			s.Game.Running = false
-			<-s.Game.ReadyToClose
 			return nil
 		default:
 			conn, err := s.listener.Accept()

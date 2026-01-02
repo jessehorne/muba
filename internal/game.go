@@ -14,14 +14,13 @@ const (
 )
 
 type Game struct {
-	Time         float32 // game runtime in seconds
-	Started      bool    // if the game has been started
-	Teams        map[string]*Team
-	Server       *Server
-	Map          *Map
-	Running      bool
-	dt           float64
-	ReadyToClose chan struct{}
+	Time    float32 // game runtime in seconds
+	Started bool    // if the game has been started
+	Teams   map[string]*Team
+	Server  *Server
+	Map     *Map
+	Running bool
+	dt      float64
 
 	StageTimerCounter float64
 	Stage             int
@@ -73,13 +72,18 @@ func (g *Game) LoadMap() {
 
 func (g *Game) StartGameLoop() {
 	oldTime := time.Now()
+	counter := 0.0
 	for g.Running {
 		newTime := time.Now()
 		g.dt = newTime.Sub(oldTime).Seconds()
 
-		// todo
+		counter += g.dt
+		if counter >= g.Map.Data.TickRate {
+			counter = 0
+		}
+
+		oldTime = newTime
 	}
-	g.ReadyToClose <- struct{}{}
 }
 
 func (g *Game) StartCountdownStage() {
@@ -87,18 +91,19 @@ func (g *Game) StartCountdownStage() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
-	secondsCounter := 10
+	secondsCounter := 3
 
 	for range ticker.C {
 		addon := "..."
-		if secondsCounter == 1 {
+		if secondsCounter == 0 {
 			addon = "! GO!!!"
 		}
-		sendToAll(g.Server.Users, fmt.Sprintf("%d%s", secondsCounter, addon))
 
-		if secondsCounter == 1 {
+		if secondsCounter == 0 {
 			g.StartRunningStage()
 			return
+		} else {
+			sendToAll(g.Server.Users, fmt.Sprintf("%d%s\n", secondsCounter, addon))
 		}
 		secondsCounter--
 	}
@@ -106,12 +111,17 @@ func (g *Game) StartCountdownStage() {
 
 func (g *Game) StartRunningStage() {
 	g.Stage = GameStageRunning
-	sendToAll(g.Server.Users, "The game has begun!")
+	g.Running = true
+	go g.StartGameLoop()
+	sendToAll(g.Server.Users, "The game has begun!\n")
 }
 
 func (g *Game) CheckIfReadyToStart() {
 	allReady := true
 	for _, t := range g.Teams {
+		if len(t.Users) != t.Size {
+			allReady = false
+		}
 		for _, user := range t.Users {
 			if !user.Ready {
 				allReady = false

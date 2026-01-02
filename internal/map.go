@@ -11,6 +11,7 @@ type MapData struct {
 	Name      string        `json:"name"`
 	Author    string        `json:"author"`
 	Version   string        `json:"version"`
+	TickRate  float64       `json:"tickRate"`
 	Map       [][]string    `json:"map"`
 	StartTime int           `json:"startTime"`
 	Teams     []MapDataTeam `json:"teams"`
