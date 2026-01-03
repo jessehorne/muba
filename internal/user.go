@@ -11,6 +11,43 @@ import (
 	"github.com/google/uuid"
 )
 
+var (
+	directions = []string{"north", "south", "east", "west", "n", "s", "e", "w", "ne", "nw", "se", "sw"}
+
+	DirStringToVector = map[string]Vector2{
+		"north": {0, -1}, "n": {0, -1},
+		"south": {0, 1}, "s": {0, 1},
+		"east": {1, 0}, "e": {1, 0},
+		"west": {-1, 0}, "w": {-1, 0},
+		"ne": {1, -1},
+		"nw": {-1, -1},
+		"se": {1, 1},
+		"sw": {-1, 1},
+	}
+
+	DirVectorToString = map[Vector2]string{
+		{0, -1}:  "north",
+		{0, 1}:   "south",
+		{1, 0}:   "east",
+		{-1, 0}:  "west",
+		{1, -1}:  "ne",
+		{-1, -1}: "nw",
+		{1, 1}:   "se",
+		{-1, 1}:  "sw",
+	}
+
+	DirShortToLong = map[string]string{
+		"north": "north",
+		"south": "south",
+		"east":  "east",
+		"west":  "west",
+		"ne":    "north east",
+		"nw":    "north west",
+		"se":    "south east",
+		"sw":    "south west",
+	}
+)
+
 type User struct {
 	conn      net.Conn
 	reader    *bufio.Reader
@@ -94,6 +131,7 @@ func (u *User) getTeamLoop() {
 		}
 
 		u.Team = tryTeam
+		u.Coords = u.Server.Game.Map.RoomIDToCoords(tryTeam.Base)
 		tryTeam.Users = append(tryTeam.Users, u)
 	}
 	sendToAllExcept(u.conn, u.Server.Users, fmt.Sprintf("%s joined %s team!\n", u.Username, team))
@@ -145,6 +183,10 @@ func (u *User) inputLoop() {
 			sendToOne(u.conn, u.Team.Name)
 		} else if data == "ready" {
 			u.SetReady()
+		} else if data == "look" || data == "l" {
+			u.Look()
+		} else if slices.Contains(directions, data) {
+			u.Move(data)
 		}
 	}
 }
@@ -160,4 +202,44 @@ func (u *User) SetReady() {
 	u.Ready = true
 	sendToAll(u.Server.Users, fmt.Sprintf("Player '%s' is ready!\n", u.GetUsernameWithTeam()))
 	u.Server.Game.CheckIfReadyToStart()
+	log.Printf("[INFO] player %s is ready and their coords are %v\n", u.Username, u.Coords)
+}
+
+func (u *User) IsInBase() bool {
+	return u.Server.Game.Map.CoordsToRoomID(u.Coords) == u.Team.ID
+}
+
+// Move attempts to move the user in a specific direction.
+func (u *User) Move(dir string) {
+	vel, ok := DirStringToVector[dir]
+	if !ok {
+		sendToOne(u.conn, "Invalid directional command. Please contact an admin.")
+		return
+	}
+
+	nextRoomCoords := u.Coords.Add(vel)
+	nextRoom := u.Server.Game.Map.CoordsToRoomID(nextRoomCoords)
+	if nextRoom == "" {
+		sendToOne(u.conn, "You can't go that way.")
+		return
+	}
+
+	u.Coords = nextRoomCoords
+	sendToAllExcept(u.conn, u.Server.Users, fmt.Sprintf("Player %s went %s.", u.GetUsernameWithTeam(), DirShortToLong[dir]))
+	u.Look()
+}
+
+// Look tells the player what they see in the current room.
+func (u *User) Look() {
+	msg := fmt.Sprintf("Coordinates: %d,%d\n", u.Coords.X, u.Coords.Y)
+
+	r := u.Server.Game.Map.CoordsToRoom(u.Coords)
+	if r != nil {
+		if len(r.Towers) > 0 {
+			towerAddon := colors[r.Towers[0].Team.ID].Sprint(r.Towers[0].Team.Name)
+			msg = msg + fmt.Sprintf("There sits a large %s tower.\n", towerAddon)
+		}
+	}
+
+	sendToOne(u.conn, msg)
 }

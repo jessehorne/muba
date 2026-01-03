@@ -48,14 +48,43 @@ func (g *Game) LoadMap() {
 	// init teams
 	g.Teams = make(map[string]*Team)
 	for _, t := range g.Map.Data.Teams {
-		g.Teams[t.ID] = NewTeam(t)
+		g.Teams[t.ID] = NewTeam(t.ID, g)
 	}
 
-	// set up base
+	// init rooms
+	roomCounter := 0
+	for y, row := range g.Map.Data.Map {
+		for x, roomID := range row {
+			newRoom := NewRoom(
+				g, roomID, NewVector2(x, y), "Tower "+roomID, "A tower that attacks the enemy.")
+			g.Map.Rooms[y][x] = newRoom
+			roomCounter++
+		}
+	}
+	log.Printf("[INFO] created %d rooms\n", roomCounter)
+
+	// set up bases
 	// todo
 
 	// load towers
-	// todo
+	towersCounter := 0
+	for _, t := range g.Map.Data.Towers.Red {
+		coords := g.Map.RoomIDToCoords(t)
+		room := g.Map.CoordsToRoom(coords)
+		if room != nil {
+			room.Towers = append(room.Towers, NewTower(g, room, coords, g.Teams["red"]))
+			towersCounter++
+		}
+	}
+	for _, t := range g.Map.Data.Towers.Blue {
+		coords := g.Map.RoomIDToCoords(t)
+		room := g.Map.CoordsToRoom(coords)
+		if room != nil {
+			room.Towers = append(room.Towers, NewTower(g, room, coords, g.Teams["blue"]))
+			towersCounter++
+		}
+	}
+	log.Printf("[INFO] created %d towers\n", towersCounter)
 
 	// set up minion spawning
 	// todo
@@ -70,20 +99,46 @@ func (g *Game) LoadMap() {
 	// todo
 }
 
-func (g *Game) StartGameLoop() {
+func (g *Game) SetPlayersStartingPositions() {
+	log.Println("[INFO] setting player starting positions")
+	for _, t := range g.Teams {
+		for _, u := range t.Users {
+			u.Coords = g.Map.RoomIDToCoords(t.ID)
+		}
+	}
+}
+
+func (g *Game) StartGame() {
+	g.StartMinionSpawnerHandler()
+
 	oldTime := time.Now()
 	counter := 0.0
+	g.Running = true
 	for g.Running {
 		newTime := time.Now()
 		g.dt = newTime.Sub(oldTime).Seconds()
-
 		counter += g.dt
-		if counter >= g.Map.Data.TickRate {
+		if counter >= 1/g.Map.Data.TickRate {
+			for _, t := range g.Teams {
+				t.Update(counter)
+			}
 			counter = 0
 		}
 
 		oldTime = newTime
 	}
+}
+
+func (g *Game) StartMinionSpawnerHandler() {
+	log.Println("[INFO] starting minion spawner handler")
+	go func() {
+		ticker := time.NewTicker(time.Duration(g.Map.Data.Minions.RespawnTime) * time.Second)
+		for _ = range ticker.C {
+			for _, t := range g.Teams {
+				t.SpawnSmallMinionWave()
+			}
+		}
+	}()
 }
 
 func (g *Game) StartCountdownStage() {
@@ -112,7 +167,7 @@ func (g *Game) StartCountdownStage() {
 func (g *Game) StartRunningStage() {
 	g.Stage = GameStageRunning
 	g.Running = true
-	go g.StartGameLoop()
+	go g.StartGame()
 	sendToAll(g.Server.Users, "The game has begun!\n")
 }
 
@@ -132,4 +187,14 @@ func (g *Game) CheckIfReadyToStart() {
 		log.Println("[INFO] All players ready...starting countdown!")
 		g.StartCountdownStage()
 	}
+}
+
+func (g *Game) GetUsersInRoom(coords Vector2) map[string]*User {
+	usersInRoom := make(map[string]*User)
+	for _, u := range g.Server.Users {
+		if u.Coords == coords {
+			usersInRoom[u.ID] = u
+		}
+	}
+	return usersInRoom
 }

@@ -61,7 +61,7 @@
       }
     ]
   },
-  "turrets": {
+  "towers": {
     "health": 1000,
     "red": ["F1", "D1", "B1", "F2", "E3", "G2", "G4", "G6"],
     "blue": ["A6", "A4", "A2", "B6", "C5", "B7", "D7", "F7"],
@@ -208,5 +208,23 @@
         "coinGive": 200
       }
     ]
+  },
+  "minions": {
+    "health": 500,
+    "speed": 10,
+    "gives": {
+      "lastHitter": {
+        "coin": 50
+      }
+    },
+    "respawnTime": 10,
+    "smallCount": 4,
+    "smallDesc": "A small armoured creature with blue skin and massive pure-black eyes carrying a sword.",
+    "smallDamage": 25,
+    "smallAttackSpeed": 3,
+    "bigCount": 1,
+    "bigDesc": "A larger version of the small minion but holding a massive cannon with a large barrel.",
+    "bigDamage": 50,
+    "bigAttackSpeed": 3
   }
 }
