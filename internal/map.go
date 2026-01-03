@@ -68,12 +68,8 @@ type MapData struct {
 		Speed            int           `json:"speed"`
 		Gives            *MapDataGives `json:"gives"`
 		RespawnTime      int           `json:"respawnTime"`
-		SmallCount       int           `json:"smallCount"`
-		SmallDesc        string        `json:"smallDesc"`
 		SmallDamage      int           `json:"smallDamage"`
 		SmallAttackSpeed int           `json:"smallAttackSpeed"`
-		BigCount         int           `json:"bigCount"`
-		BigDesc          string        `json:"bigDesc"`
 		BigDamage        int           `json:"bigDamage"`
 		BigAttackSpeed   int           `json:"bigAttackSpeed"`
 	} `json:"minions"`

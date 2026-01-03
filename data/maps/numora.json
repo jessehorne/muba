@@ -211,20 +211,16 @@
   },
   "minions": {
     "health": 500,
-    "speed": 10,
+    "speed": 5,
     "gives": {
       "lastHitter": {
         "coin": 50
       }
     },
-    "respawnTime": 10,
-    "smallCount": 4,
-    "smallDesc": "A small armoured creature with blue skin and massive pure-black eyes carrying a sword.",
-    "smallDamage": 25,
+    "respawnTime": 5,
+    "smallDamage": 50,
     "smallAttackSpeed": 3,
-    "bigCount": 1,
-    "bigDesc": "A larger version of the small minion but holding a massive cannon with a large barrel.",
-    "bigDamage": 50,
+    "bigDamage": 100,
     "bigAttackSpeed": 3
   }
 }

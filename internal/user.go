@@ -59,6 +59,10 @@ type User struct {
 	Server    *Server
 	Team      *Team
 	Ready     bool
+
+	Health        int
+	CurrentHealth int
+	HealPerSecond int
 }
 
 func NewUser(conn net.Conn, s *Server) *User {
@@ -153,6 +157,9 @@ func (u *User) champSelectLoop() {
 			champType = data
 			u.ChampType = ChampStringToType[data]
 			u.GameStats = NewGameStats(u.ChampType)
+			u.Health = u.GameStats.Health
+			u.CurrentHealth = u.GameStats.Health
+			u.HealPerSecond = u.GameStats.HealPerSecond
 			champSelected = true
 		}
 	}
@@ -185,6 +192,8 @@ func (u *User) inputLoop() {
 			u.SetReady()
 		} else if data == "look" || data == "l" {
 			u.Look()
+		} else if data == "health" || data == "h" {
+			u.ShowHealth()
 		} else if slices.Contains(directions, data) {
 			u.Move(data)
 		}
@@ -225,7 +234,7 @@ func (u *User) Move(dir string) {
 	}
 
 	u.Coords = nextRoomCoords
-	sendToAllExcept(u.conn, u.Server.Users, fmt.Sprintf("Player %s went %s.", u.GetUsernameWithTeam(), DirShortToLong[dir]))
+	sendToAllExcept(u.conn, u.Server.Game.GetUsersInRoom(u.Coords), fmt.Sprintf("Player %s went %s.", u.GetUsernameWithTeam(), DirShortToLong[dir]))
 	u.Look()
 }
 
@@ -241,5 +250,26 @@ func (u *User) Look() {
 		}
 	}
 
+	sendToOne(u.conn, msg)
+}
+
+func (u *User) EnemyTeam() *Team {
+	for _, t := range u.Server.Game.Teams {
+		if t != u.Team {
+			return t
+		}
+	}
+	return nil
+}
+
+func (u *User) ShowHealth() {
+	c := colors["green"]
+	perc := float64(u.CurrentHealth / u.Health)
+	if perc < 0.2 {
+		c = colors["red"]
+	} else if perc < 0.7 {
+		c = colors["yellow"]
+	}
+	msg := c.Sprint(u.CurrentHealth) + "/" + colors["green"].Sprint(u.Health) + "\n"
 	sendToOne(u.conn, msg)
 }

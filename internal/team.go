@@ -3,7 +3,6 @@ package internal
 import (
 	"fmt"
 	"log"
-	"time"
 )
 
 const (
@@ -18,7 +17,7 @@ type Team struct {
 	Base    string // base location
 	Size    int
 	Users   []*User
-	Minions []*Minion
+	Minions []*MinionWave
 }
 
 func NewTeam(team string, g *Game) *Team {
@@ -42,15 +41,20 @@ func NewTeam(team string, g *Game) *Team {
 func (t *Team) SpawnSmallMinionWave() {
 	log.Println("[INFO] spawning minion wave")
 	go func() {
-		for i := 0; i < t.Game.Map.Data.Minions.SmallCount; i++ {
-			for l := 0; l < 3; l++ {
-				newMinion := NewMinion(MinionTypeSmall, l, t, t.Game)
-				log.Println("[INFO] creating minion", t.Name, l, newMinion.Coords)
-				t.Minions = append(t.Minions, newMinion)
-			}
+		for l := 0; l < 3; l++ {
+			newMinion := NewMinionWave(MinionTypeSmall, l, t, t.Game)
+			t.Minions = append(t.Minions, newMinion)
+			r := t.Game.Map.CoordsToRoom(t.Game.Map.RoomIDToCoords(t.Base))
+			r.Minions = append(r.Minions, newMinion)
 			c := colors[t.ID].Sprint(t.Name)
-			sendToAll(t.Game.GetUsersInRoom(t.Game.Map.RoomIDToCoords(t.Base)), fmt.Sprintf("A %s minion wave has arrived.\n", c))
-			time.Sleep(1 * time.Second)
+			addon := "heading top"
+			if l == LaneMid {
+				addon = "heading mid"
+			} else if l == LaneBottom {
+				addon = "heading bot"
+			}
+			sendToAll(t.Game.GetUsersInRoom(t.Game.Map.RoomIDToCoords(t.Base)), fmt.Sprintf("A %s minion wave has arrived %s.\n",
+				c, addon))
 		}
 	}()
 }
@@ -58,5 +62,27 @@ func (t *Team) SpawnSmallMinionWave() {
 func (t *Team) Update(dt float64) {
 	for _, m := range t.Minions {
 		m.Update(dt)
+	}
+}
+
+func (t *Team) GetEnemyTeam() *Team {
+	for _, tt := range t.Game.Teams {
+		if tt != t {
+			return tt
+		}
+	}
+	return nil
+}
+
+func (t *Team) KillMinion(m *MinionWave) {
+	minionIndex := -1
+	for i, m2 := range t.Minions {
+		if m == m2 {
+			minionIndex = i
+			break
+		}
+	}
+	if minionIndex == -1 {
+		t.Minions = append(t.Minions[:minionIndex], t.Minions[minionIndex+1:]...)
 	}
 }

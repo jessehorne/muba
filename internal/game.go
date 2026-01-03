@@ -119,9 +119,7 @@ func (g *Game) StartGame() {
 		g.dt = newTime.Sub(oldTime).Seconds()
 		counter += g.dt
 		if counter >= 1/g.Map.Data.TickRate {
-			for _, t := range g.Teams {
-				t.Update(counter)
-			}
+			g.UpdateRooms(counter)
 			counter = 0
 		}
 
@@ -129,14 +127,26 @@ func (g *Game) StartGame() {
 	}
 }
 
+func (g *Game) UpdateRooms(dt float64) {
+	for y := 0; y < len(g.Map.Data.Map); y++ {
+		for x := 0; x < len(g.Map.Data.Map[y]); x++ {
+			r := g.Map.Rooms[y][x]
+			r.Update(dt)
+		}
+	}
+}
+
 func (g *Game) StartMinionSpawnerHandler() {
 	log.Println("[INFO] starting minion spawner handler")
 	go func() {
-		ticker := time.NewTicker(time.Duration(g.Map.Data.Minions.RespawnTime) * time.Second)
-		for _ = range ticker.C {
-			for _, t := range g.Teams {
-				t.SpawnSmallMinionWave()
-			}
+		//ticker := time.NewTicker(time.Duration(g.Map.Data.Minions.RespawnTime) * time.Second)
+		//for _ = range ticker.C {
+		//	for _, t := range g.Teams {
+		//		t.SpawnSmallMinionWave()
+		//	}
+		//}
+		for _, t := range g.Teams {
+			t.SpawnSmallMinionWave()
 		}
 	}()
 }

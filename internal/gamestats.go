@@ -18,64 +18,69 @@ var (
 
 var (
 	GameStatsFighter = GameStats{
-		Strength:    10,
-		Defense:     10,
-		MoveSpeed:   7,
-		AttackSpeed: 4,
-		Aura:        1,
-		Health:      700,
-		Gold:        100,
-		Experience:  0,
-		Level:       1,
+		Strength:      10,
+		Defense:       10,
+		MoveSpeed:     7,
+		AttackSpeed:   4,
+		Aura:          1,
+		Health:        700,
+		HealPerSecond: 1,
+		Gold:          100,
+		Experience:    0,
+		Level:         1,
 	}
 
 	GameStatsWizard = GameStats{
-		Strength:    1,
-		Defense:     3,
-		MoveSpeed:   5,
-		AttackSpeed: 4,
-		Aura:        10,
-		Health:      500,
-		Gold:        100,
-		Experience:  0,
-		Level:       1,
+		Strength:      1,
+		Defense:       3,
+		MoveSpeed:     5,
+		AttackSpeed:   4,
+		Aura:          10,
+		Health:        500,
+		HealPerSecond: 1,
+		Gold:          100,
+		Experience:    0,
+		Level:         1,
 	}
 
 	GameStatsArcher = GameStats{
-		Strength:    3,
-		Defense:     3,
-		MoveSpeed:   4,
-		AttackSpeed: 2,
-		Aura:        0,
-		Health:      400,
-		Gold:        100,
-		Experience:  0,
-		Level:       1,
+		Strength:      3,
+		Defense:       3,
+		MoveSpeed:     4,
+		AttackSpeed:   2,
+		Aura:          0,
+		Health:        400,
+		HealPerSecond: 1,
+		Gold:          100,
+		Experience:    0,
+		Level:         1,
 	}
 
 	GameStatsNinja = GameStats{
-		Strength:    5,
-		Defense:     1,
-		MoveSpeed:   3,
-		AttackSpeed: 3,
-		Aura:        0,
-		Health:      300,
-		Gold:        100,
-		Experience:  0,
-		Level:       1,
+		Strength:      5,
+		Defense:       1,
+		MoveSpeed:     3,
+		AttackSpeed:   3,
+		Aura:          0,
+		Health:        300,
+		HealPerSecond: 1,
+		Gold:          100,
+		Experience:    0,
+		Level:         1,
 	}
 )
 
 type GameStats struct {
-	Strength    int // how hard you hit with melee/weapons
-	Defense     int // how much you can take a punch
-	MoveSpeed   int // how fast you move
-	AttackSpeed int // how fast you attack
-	Aura        int // how good you are at magick
-	Health      int // your hit points
-	Gold        int // gold aka currency
-	Experience  int // total experience
-	Level       int // real level
+	Strength      int // how hard you hit with melee/weapons
+	Defense       int // how much you can take a punch
+	MoveSpeed     int // how fast you move
+	AttackSpeed   int // how fast you attack
+	Aura          int // how good you are at magick
+	Health        int // your hit points
+	HealPerSecond int // how much you heal per second
+	Gold          int // gold aka currency
+	Experience    int // total experience
+	Level         int // real level
 }
 
 func NewGameStats(champType int) *GameStats {
