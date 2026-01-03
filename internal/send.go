@@ -8,7 +8,10 @@ import (
 	"github.com/fatih/color"
 )
 
-var (
+var currentColor string
+var colors map[string]*color.Color
+
+func initColors() {
 	currentColor = "white"
 
 	colors = map[string]*color.Color{
@@ -22,10 +25,6 @@ var (
 		"grey":   color.New(color.FgHiBlack),
 		"cyan":   color.New(color.FgCyan),
 	}
-)
-
-func init() {
-	color.NoColor = false
 }
 
 func sendToAllExcept(conn net.Conn, users map[string]*User, msg string) {

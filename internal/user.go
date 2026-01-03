@@ -138,13 +138,15 @@ func (u *User) getTeamLoop() {
 		u.Coords = u.Server.Game.Map.RoomIDToCoords(tryTeam.Base)
 		tryTeam.Users = append(tryTeam.Users, u)
 	}
-	sendToAllExcept(u.conn, u.Server.Users, fmt.Sprintf("%s joined %s team!\n", u.Username, team))
-	sendToOne(u.conn, fmt.Sprintf("You joined %s team!\n", team))
+	sendToAllExcept(u.conn, u.Server.Users, fmt.Sprintf("%s joined %s team!\n", u.Username, colors[u.Team.ID].Sprint(u.Team.Name)))
+	sendToOne(u.conn, fmt.Sprintf("You joined %s team!\n", colors[u.Team.ID].Sprint(u.Team.Name)))
 	log.Println("[INFO]", fmt.Sprintf("%s joined %s team", u.Username, team))
 }
 
 func (u *User) champSelectLoop() {
-	sendToOne(u.conn, "Select a champ (fighter, wizard, archer, or ninja): ")
+	sendToOne(u.conn, fmt.Sprintf("Select a champ (%s, %s, %s, or %s): ",
+		ChampTypeColored["fighter"], ChampTypeColored["wizard"],
+		ChampTypeColored["archer"], ChampTypeColored["ninja"]))
 	var champSelected bool
 	var champType string
 	for !champSelected {
@@ -163,20 +165,9 @@ func (u *User) champSelectLoop() {
 			champSelected = true
 		}
 	}
-	c := "white"
-	switch champType {
-	case "fighter":
-		c = "purple"
-	case "wizard":
-		c = "blue"
-	case "archer":
-		c = "green"
-	case "ninja":
-		c = "yellow"
-	}
-	msg := fmt.Sprintf("Player '%s' has chosen to be a %s", u.GetUsernameWithTeam(), colors[c].Sprint(champType))
+	msg := fmt.Sprintf("Player '%s' has chosen to be a %s", u.GetUsernameWithTeam(), ChampTypeColored[champType])
 	sendToAllExcept(u.conn, u.Server.Users, msg)
-	sendToOne(u.conn, fmt.Sprintf("You have chosen to be a %s", colors[c].Sprint(champType)))
+	sendToOne(u.conn, fmt.Sprintf("You have chosen to be a %s", ChampTypeColored[champType]))
 }
 
 func (u *User) inputLoop() {
@@ -193,7 +184,9 @@ func (u *User) inputLoop() {
 		} else if data == "look" || data == "l" {
 			u.Look()
 		} else if data == "health" || data == "h" {
-			u.ShowHealth()
+			sendToOne(u.conn, u.FormattedHealth()+"\n")
+		} else if data == "me" {
+			sendToOne(u.conn, u.FormattedQuickStat())
 		} else if slices.Contains(directions, data) {
 			u.Move(data)
 		}
@@ -253,6 +246,13 @@ func (u *User) Look() {
 	sendToOne(u.conn, msg)
 }
 
+func (u *User) FormattedQuickStat() string {
+	msg := "%s\t[%s]\t%s\t(%d,%d)\n"
+	return fmt.Sprintf(msg,
+		u.GetUsernameWithTeam(), u.FormattedHealth(),
+		ChampTypeColored[ChampTypeToString[u.ChampType]], u.Coords.X, u.Coords.Y)
+}
+
 func (u *User) EnemyTeam() *Team {
 	for _, t := range u.Server.Game.Teams {
 		if t != u.Team {
@@ -262,7 +262,7 @@ func (u *User) EnemyTeam() *Team {
 	return nil
 }
 
-func (u *User) ShowHealth() {
+func (u *User) FormattedHealth() string {
 	c := colors["green"]
 	perc := float64(u.CurrentHealth / u.Health)
 	if perc < 0.2 {
@@ -270,6 +270,6 @@ func (u *User) ShowHealth() {
 	} else if perc < 0.7 {
 		c = colors["yellow"]
 	}
-	msg := c.Sprint(u.CurrentHealth) + "/" + colors["green"].Sprint(u.Health) + "\n"
-	sendToOne(u.conn, msg)
+	msg := c.Sprint(u.CurrentHealth) + "/" + colors["green"].Sprint(u.Health)
+	return msg
 }

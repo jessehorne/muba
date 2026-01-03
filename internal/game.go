@@ -45,6 +45,10 @@ func NewGame(s *Server, mapPath string) (*Game, error) {
 }
 
 func (g *Game) LoadMap() {
+	// init things
+	initColors()
+	initGamestats()
+
 	// init teams
 	g.Teams = make(map[string]*Team)
 	for _, t := range g.Map.Data.Teams {

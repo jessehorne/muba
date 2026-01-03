@@ -8,15 +8,10 @@ const (
 )
 
 var (
-	ChampStringToType = map[string]int{
-		"fighter": ChampTypeFighter,
-		"wizard":  ChampTypeWizard,
-		"archer":  ChampTypeArcher,
-		"ninja":   ChampTypeNinja,
-	}
-)
+	ChampStringToType map[string]int
+	ChampTypeToString map[int]string
+	ChampTypeColored  map[string]string
 
-var (
 	GameStatsFighter = GameStats{
 		Strength:      10,
 		Defense:       10,
@@ -69,6 +64,29 @@ var (
 		Level:         1,
 	}
 )
+
+func initGamestats() {
+	ChampStringToType = map[string]int{
+		"fighter": ChampTypeFighter,
+		"wizard":  ChampTypeWizard,
+		"archer":  ChampTypeArcher,
+		"ninja":   ChampTypeNinja,
+	}
+
+	ChampTypeToString = map[int]string{
+		ChampTypeFighter: "fighter",
+		ChampTypeWizard:  "wizard",
+		ChampTypeArcher:  "archer",
+		ChampTypeNinja:   "ninja",
+	}
+
+	ChampTypeColored = map[string]string{
+		"fighter": colors["purple"].Sprint("fighter"),
+		"wizard":  colors["cyan"].Sprint("wizard"),
+		"archer":  colors["green"].Sprint("archer"),
+		"ninja":   colors["yellow"].Sprint("ninja"),
+	}
+}
 
 type GameStats struct {
 	Strength      int // how hard you hit with melee/weapons

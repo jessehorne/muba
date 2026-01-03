@@ -40,8 +40,8 @@ func (r *Room) Update(dt float64) {
 		// check if any need to die
 		if m.CurrentHealth <= 0 {
 			c := colors[m.Team.ID].Sprint(m.Team.Name)
-			sendToAll(r.Game.GetUsersInRoom(r.Coords), fmt.Sprintf("%s has come for a %s minion wave!\n", c,
-				color.New(color.BgWhite).Add(color.FgBlack).Sprint("Death")))
+			sendToAll(r.Game.GetUsersInRoom(r.Coords), fmt.Sprintf("%s has come for a %s minion wave!\n",
+				color.New(color.BgWhite).Add(color.FgBlack).Sprint("Death"), c))
 			r.KillMinion(m)
 			for _, m2 := range r.Minions {
 				if m2.targetMinion == m {

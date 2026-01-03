@@ -11,13 +11,14 @@ const (
 )
 
 type Team struct {
-	Game    *Game
-	ID      string
-	Name    string
-	Base    string // base location
-	Size    int
-	Users   []*User
-	Minions []*MinionWave
+	Game              *Game
+	ID                string
+	Name              string
+	Base              string // base location
+	Size              int
+	Users             []*User
+	Minions           []*MinionWave
+	CurrentMinionWave int
 }
 
 func NewTeam(team string, g *Game) *Team {
@@ -39,7 +40,8 @@ func NewTeam(team string, g *Game) *Team {
 }
 
 func (t *Team) SpawnSmallMinionWave() {
-	log.Println("[INFO] spawning minion wave")
+	t.CurrentMinionWave++
+	log.Printf("[INFO] spawning minion wave #%d\n", t.CurrentMinionWave)
 	go func() {
 		for l := 0; l < 3; l++ {
 			newMinion := NewMinionWave(MinionTypeSmall, l, t, t.Game)
