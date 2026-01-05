@@ -1,5 +1,7 @@
 package internal
 
+import "time"
+
 const (
 	ChampTypeFighter = iota
 	ChampTypeWizard
@@ -25,24 +27,48 @@ var (
 		Level:         1,
 		Attacks: map[string]Attack{
 			"1": {
-				Name:            "",
-				Description:     "",
-				CalculateDamage: nil,
+				Name:        "Swing",
+				Description: "A long and slow swing of the sword.",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						dmg := u.GameStats.Level*u.GameStats.Strength*10 + 50
+						hs[0].DoDamage(dmg)
+					}
+				},
+				Cooldown: 5,
 			},
 			"2": {
-				Name:            "",
-				Description:     "",
-				CalculateDamage: nil,
+				Name:        "Slash",
+				Description: "A short but strong slash with the sword.",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						dmg := u.GameStats.Level*u.GameStats.Strength*10 + 10
+						hs[0].DoDamage(dmg)
+					}
+				},
+				Cooldown: 3,
 			},
 			"3": {
-				Name:            "",
-				Description:     "",
-				CalculateDamage: nil,
+				Name:        "Stab",
+				Description: "A quick lunge with the sword.",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						dmg := u.GameStats.Level * u.GameStats.Strength * 10
+						hs[0].DoDamage(dmg)
+					}
+				},
+				Cooldown: 3,
 			},
 			"4": {
-				Name:            "",
-				Description:     "",
-				CalculateDamage: nil,
+				Name:        "Triple Swing Beatdown",
+				Description: "Three fast swinging attacks that do a lot of damage.",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						dmg := u.GameStats.Level * u.GameStats.Strength * 20
+						hs[0].DoDamage(dmg)
+					}
+				},
+				Cooldown: 3,
 			},
 		},
 	}
@@ -58,6 +84,50 @@ var (
 		Gold:          100,
 		Experience:    0,
 		Level:         1,
+		Attacks: map[string]Attack{
+			"1": {
+				Name:        "Fireball",
+				Description: "A large blast of fire for high damage.",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						dmg := u.GameStats.Level*u.GameStats.Aura*10 + 50
+						hs[0].DoDamage(dmg)
+					}
+				},
+				Cooldown: 5,
+			},
+			"2": {
+				Name:        "Sludge",
+				Description: "A blast of sludge that slows an enemy player for 3 seconds.",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						hs[0].Slow(u.GameStats.Level)
+					}
+				},
+				Cooldown: 3,
+			},
+			"3": {
+				Name:        "Heal",
+				Description: "Heal yourself and friendly players.",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						hs[0].DoDamage(-u.GameStats.Level * u.GameStats.Aura * 10)
+					}
+				},
+				Cooldown: 3,
+			},
+			"4": {
+				Name:        "Call to Xan'Roth",
+				Description: "Call upon Xan'Roth to cast down lightning from the ethereal realm on an opponent.",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						dmg := u.GameStats.Level * u.GameStats.Aura * 20
+						hs[0].DoDamage(dmg)
+					}
+				},
+				Cooldown: 3,
+			},
+		},
 	}
 
 	GameStatsArcher = GameStats{
@@ -70,7 +140,58 @@ var (
 		HealPerSecond: 1,
 		Gold:          100,
 		Experience:    0,
-		Level:         1,
+		Level:         1, Attacks: map[string]Attack{
+			"1": {
+				Name:        "Three Arrow Blast",
+				Description: "Three quick arrows to an opponent.",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						dmg := u.GameStats.Level*u.GameStats.Strength*10 + 60
+						hs[0].DoDamage(dmg)
+					}
+				},
+				Cooldown: 2,
+			},
+			"2": {
+				Name:        "Heavy Arrow",
+				Description: "A slow but heavy hitting arrow that knocks an opponent out temporarily.",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						hs[0].KnockOut(u.GameStats.Level)
+					}
+				},
+				Cooldown: 5,
+			},
+			"3": {
+				Name:        "Fire Arrow",
+				Description: "Does damage to an opponent over time with fire!",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						go func() {
+							dmg := u.GameStats.Level * u.GameStats.Strength
+							for i := 0; i < u.GameStats.Level; i++ {
+								hs[0].DoDamage(dmg)
+								time.Sleep(1 * time.Second)
+							}
+						}()
+					}
+				},
+				Cooldown: 3,
+			},
+			"4": {
+				Name:        "Explosive Arrow",
+				Description: "Launch an explosive arrow at an enemy doing damage to every opponent within range.",
+				Do: func(u *User, hs []Hurtable) {
+					if hs != nil {
+						dmg := u.GameStats.Level * u.GameStats.Strength * 20
+						for _, h := range hs {
+							h.DoDamage(dmg)
+						}
+					}
+				},
+				Cooldown: 5,
+			},
+		},
 	}
 
 	GameStatsNinja = GameStats{
@@ -111,9 +232,10 @@ func initGamestats() {
 }
 
 type Attack struct {
-	Name            string
-	Description     string
-	CalculateDamage func() int
+	Name        string
+	Description string
+	Do          func(u *User, hs []Hurtable)
+	Cooldown    int
 }
 
 type GameStats struct {
