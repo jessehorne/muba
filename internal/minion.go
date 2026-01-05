@@ -233,7 +233,19 @@ func (m *MinionWave) Room() *Room {
 	return m.Game.Map.CoordsToRoom(m.Coords)
 }
 
+func (m *MinionWave) FormattedHealth() string {
+	c := colors["green"]
+	perc := float64(m.CurrentHealth) / float64(m.Health)
+	if perc < 0.2 {
+		c = colors["red"]
+	} else if perc < 0.7 {
+		c = colors["yellow"]
+	}
+	msg := c.Sprint(m.CurrentHealth) + "/" + colors["green"].Sprint(m.Health)
+	return msg
+}
+
 func (m *MinionWave) GetColoredNameAndHealth() string {
-	c := colors[m.Team.ID].Sprint(m.Team.Name)
-	return fmt.Sprintf("%s minion wave (%d)", c, m.CurrentHealth)
+	c := colors[m.Team.ID].Sprint("minion") + " wave"
+	return fmt.Sprintf("%s (%s)", c, m.FormattedHealth())
 }

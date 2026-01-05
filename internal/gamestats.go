@@ -23,6 +23,28 @@ var (
 		Gold:          100,
 		Experience:    0,
 		Level:         1,
+		Attacks: map[string]Attack{
+			"1": {
+				Name:            "",
+				Description:     "",
+				CalculateDamage: nil,
+			},
+			"2": {
+				Name:            "",
+				Description:     "",
+				CalculateDamage: nil,
+			},
+			"3": {
+				Name:            "",
+				Description:     "",
+				CalculateDamage: nil,
+			},
+			"4": {
+				Name:            "",
+				Description:     "",
+				CalculateDamage: nil,
+			},
+		},
 	}
 
 	GameStatsWizard = GameStats{
@@ -88,6 +110,12 @@ func initGamestats() {
 	}
 }
 
+type Attack struct {
+	Name            string
+	Description     string
+	CalculateDamage func() int
+}
+
 type GameStats struct {
 	Strength      int // how hard you hit with melee/weapons
 	Defense       int // how much you can take a punch
@@ -99,6 +127,7 @@ type GameStats struct {
 	Gold          int // gold aka currency
 	Experience    int // total experience
 	Level         int // real level
+	Attacks       map[string]Attack
 }
 
 func NewGameStats(champType int) *GameStats {

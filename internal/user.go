@@ -13,6 +13,7 @@ import (
 
 var (
 	directions = []string{"north", "south", "east", "west", "n", "s", "e", "w", "ne", "nw", "se", "sw"}
+	attacks    = []string{"1", "2", "3", "4"}
 
 	DirStringToVector = map[string]Vector2{
 		"north": {0, -1}, "n": {0, -1},
@@ -165,7 +166,7 @@ func (u *User) champSelectLoop() {
 			champSelected = true
 		}
 	}
-	msg := fmt.Sprintf("Player '%s' has chosen to be a %s", u.GetUsernameWithTeam(), ChampTypeColored[champType])
+	msg := fmt.Sprintf("%s has chosen to be a %s", u.GetColoredNameAndHealth(), ChampTypeColored[champType])
 	sendToAllExcept(u.conn, u.Server.Users, msg)
 	sendToOne(u.conn, fmt.Sprintf("You have chosen to be a %s", ChampTypeColored[champType]))
 }
@@ -220,30 +221,67 @@ func (u *User) Move(dir string) {
 	}
 
 	nextRoomCoords := u.Coords.Add(vel)
-	nextRoom := u.Server.Game.Map.CoordsToRoomID(nextRoomCoords)
-	if nextRoom == "" {
+	nextRoom := u.Server.Game.Map.CoordsToRoom(nextRoomCoords)
+	if nextRoom == nil {
 		sendToOne(u.conn, "You can't go that way.")
 		return
 	}
 
+	// remove user from previous room and put them in next room
+	prevRoom := u.Server.Game.Map.CoordsToRoom(u.Coords)
+	playerIndex := -1
+	for i, uu := range prevRoom.Users {
+		if u == uu {
+			playerIndex = i
+			break
+		}
+	}
+	if playerIndex != -1 {
+		prevRoom.Users = append(prevRoom.Users[:playerIndex], prevRoom.Users[playerIndex+1:]...)
+	}
+	nextRoom.Users = append(nextRoom.Users, u)
+
+	sendToAllExcept(u.conn, u.Server.Game.GetUsersInRoom(u.Coords), fmt.Sprintf("%s went %s.", u.GetFullName(), DirShortToLong[dir]))
 	u.Coords = nextRoomCoords
-	sendToAllExcept(u.conn, u.Server.Game.GetUsersInRoom(u.Coords), fmt.Sprintf("Player %s went %s.", u.GetUsernameWithTeam(), DirShortToLong[dir]))
+	sendToAllExcept(u.conn, u.Server.Game.GetUsersInRoom(u.Coords), fmt.Sprintf("%s has arrived.", u.GetFullName()))
 	u.Look()
 }
 
 // Look tells the player what they see in the current room.
 func (u *User) Look() {
-	msg := fmt.Sprintf("Coordinates: %d,%d\n", u.Coords.X, u.Coords.Y)
+	msg := fmt.Sprintf("Room: %s (%d,%d)\n", u.Server.Game.Map.CoordsToRoom(u.Coords).ID, u.Coords.X, u.Coords.Y)
 
 	r := u.Server.Game.Map.CoordsToRoom(u.Coords)
 	if r != nil {
-		if len(r.Towers) > 0 {
-			towerAddon := colors[r.Towers[0].Team.ID].Sprint(r.Towers[0].Team.Name)
-			msg = msg + fmt.Sprintf("There sits a large %s tower.\n", towerAddon)
-		}
-	}
+		var things []string
 
-	sendToOne(u.conn, msg)
+		// towers
+		if len(r.Towers) > 0 {
+			things = append(things, r.Towers[0].GetColoredNameAndHealth())
+		}
+
+		// minions
+		if len(r.Minions) > 0 {
+			for _, m := range r.Minions {
+				things = append(things, m.GetColoredNameAndHealth())
+			}
+		}
+
+		// other players
+		if len(r.Users) > 1 {
+			for _, uu := range r.Users {
+				if u != uu {
+					things = append(things, u.GetFullName())
+				}
+			}
+		}
+
+		if len(things) > 0 {
+			msg = msg + fmt.Sprintf("%s.\n", strings.Join(things, ", "))
+		}
+
+		sendToOne(u.conn, msg)
+	}
 }
 
 func (u *User) FormattedQuickStat() string {
@@ -264,7 +302,7 @@ func (u *User) EnemyTeam() *Team {
 
 func (u *User) FormattedHealth() string {
 	c := colors["green"]
-	perc := float64(u.CurrentHealth / u.Health)
+	perc := float64(u.CurrentHealth) / float64(u.Health)
 	if perc < 0.2 {
 		c = colors["red"]
 	} else if perc < 0.7 {
@@ -272,4 +310,19 @@ func (u *User) FormattedHealth() string {
 	}
 	msg := c.Sprint(u.CurrentHealth) + "/" + colors["green"].Sprint(u.Health)
 	return msg
+}
+
+func (u *User) GetColoredNameAndHealth() string {
+	c := colors[u.Team.ID].Sprint(u.Username)
+	return fmt.Sprintf("%s (%s)", c, u.FormattedHealth())
+}
+
+func (u *User) GetColoredName() string {
+	c := colors[u.Team.ID].Sprint(u.Username)
+	return fmt.Sprintf("%s", c)
+}
+
+func (u *User) GetFullName() string {
+	return fmt.Sprintf("%s (%s) [%s]", u.GetColoredName(),
+		ChampTypeColored[ChampTypeToString[u.ChampType]], u.FormattedHealth())
 }
